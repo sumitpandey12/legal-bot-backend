@@ -41,7 +41,7 @@ const FilesController = {
 
   async getFiles(req, res) {
     try {
-      const files = fs.readdirSync("./tmp");
+      const files = fs.readdirSync("/tmp");
 
       const returnFiles = files.map((file) => {
         return {
