@@ -8,7 +8,6 @@ const {
 } = require("@langchain/core/runnables");
 
 const answerTemplate = `You are a helpful and enthusiastic legal assistent who can answer a given question about legal queries based on the context provided and chatHistory. 
-Try to find the answer in the context and chatHistory.
 you are allowed to reply the greeting by ignoring the context if the question is about greeting.
 If you really don't know the answer in context and chatHistory, say "I'm sorry, I don't know the answer to that." 
 And direct the questioner to email help@sumit.com. Don't try to make up an answer. 
@@ -17,19 +16,16 @@ context: {context}
 question: {question}
 chatHistory: {chatHistory}`;
 
-var chatHistory = [];
-
 const answerPrompt = PromptTemplate.fromTemplate(answerTemplate);
 
 function combineDocuments(docs) {
   return docs.map((doc) => doc.pageContent).join("\n\n");
 }
 
-async function standaloneQuestion({ question }) {
+async function standaloneQuestion({ question, chatHistory }) {
   if (!question) {
     return "Please provide a question";
   }
-  chatHistory.push({ role: "user", content: question });
   try {
     const openAIApiKey = process.env.OPENAI_API_KEY;
     const llm = new ChatOpenAI({ openAIApiKey });
@@ -48,6 +44,7 @@ async function standaloneQuestion({ question }) {
       retriever,
       combineDocuments,
     ]);
+
     const answerChain = answerPrompt.pipe(llm).pipe(new StringOutputParser());
 
     const chain = RunnableSequence.from([
@@ -58,17 +55,12 @@ async function standaloneQuestion({ question }) {
       {
         context: retrieverChain,
         question: ({ original_input }) => original_input.question,
-        chatHistory: () => JSON.stringify(chatHistory),
-      },
-      (prevResult) => {
-        console.log(prevResult);
-        return prevResult;
+        chatHistory: () => chatHistory,
       },
       answerChain,
     ]);
 
     const response = await chain.invoke({ question });
-    chatHistory.push({ role: "assistant", content: response });
     return {
       message: response,
       standaloneQuestion: response.standalone_question,
@@ -81,44 +73,41 @@ async function standaloneQuestion({ question }) {
 
 const SearchController = {
   async search(req, res) {
-    const { question } = req.body;
+    const { question, chatHistory } = req.body;
     if (!question) {
       return res.status(400).json({
         status: "success",
-        message: "Please provide a question",
+        data: "Please provide a question",
       });
-    }
-
-    if (chatHistory.length > 50) {
-      chatHistory = [];
     }
 
     const response = await standaloneQuestion({
       question: question,
+      chatHistory: chatHistory,
     });
 
     res.json({
       status: "success",
-      message: response,
+      data: response,
     });
   },
 
-  async clearChatHistory(req, res) {
-    chatHistory = [];
-    res.json({
-      status: "success",
-      message: "Chat history cleared successfully",
-      data: chatHistory,
-    });
-  },
+  // async clearChatHistory(req, res) {
+  //   chatHistory = [];
+  //   res.json({
+  //     status: "success",
+  //     message: "Chat history cleared successfully",
+  //     data: chatHistory,
+  //   });
+  // },
 
-  async getChatHistory(req, res) {
-    res.json({
-      status: "success",
-      message: "Chat history fetched successfully",
-      data: chatHistory,
-    });
-  },
+  // async getChatHistory(req, res) {
+  //   res.json({
+  //     status: "success",
+  //     message: "Chat history fetched successfully",
+  //     data: chatHistory,
+  //   });
+  // },
 };
 
 module.exports = SearchController;

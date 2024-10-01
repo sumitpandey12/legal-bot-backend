@@ -15,8 +15,9 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     const files = fs.readdirSync("/tmp");
     let found = false;
-    const returnFiles = files.map((item) => {
+    files.map((item) => {
       if (item == file.originalname) {
+        console.log(item, file.originalname);
         found = true;
         req.fileExists = true;
       }
@@ -24,6 +25,7 @@ const storage = multer.diskStorage({
     if (!found) {
       req.fileExists = false;
     }
+    req.filename = file.originalname;
     cb(null, file.originalname);
   },
 });
@@ -31,6 +33,7 @@ const upload = multer({ storage: storage });
 
 router.post("/", upload.single("file"), FilesController.uploadFiles);
 router.get("/", FilesController.getFiles);
+router.delete("/:filename", FilesController.deleteFile);
 router.delete("/", FilesController.deleteFiles);
 
 module.exports = router;

@@ -12,9 +12,10 @@ async function uploadTextToDBVector({
   openAIApiKey,
   sbApiKey,
   sbUrl,
+  fileName,
 }) {
   try {
-    console.log("Getting text from file");
+    console.log("Getting text from filename: " + fileName);
     const text = (await pdf(filePath)).text;
 
     const splitter = new RecursiveCharacterTextSplitter({
@@ -26,20 +27,22 @@ async function uploadTextToDBVector({
     console.log("Splitting text into chunks");
     const output = await splitter.createDocuments([text]);
 
-    console.log("Chunk size: ", output.length);
-
+    const embeddingsList = await createEmbeddingsList({
+      chunks: output,
+      filename: fileName,
+    });
     const client = createClient(sbUrl, sbApiKey);
+    const { data, error } = await client
+      .from("documents")
+      .insert(embeddingsList)
+      .select();
 
-    const res = await SupabaseVectorStore.fromDocuments(
-      output,
-      new OpenAIEmbeddings({ openAIApiKey }),
-      {
-        client,
-        tableName,
-      }
-    );
+    console.log("Uploaded text to Supabase");
 
-    console.log("Uploaded text to Supabase Vector Store");
+    if (error) {
+      console.error("Error during upload:", error.message);
+      return false;
+    }
 
     return {
       tableName: "documents",
@@ -48,9 +51,24 @@ async function uploadTextToDBVector({
     };
   } catch (err) {
     console.error("Error during upload:", err);
-    // Throw the error so it can be handled by the calling function
     throw err;
   }
+}
+
+async function createEmbeddingsList({ chunks, filename }) {
+  const lists = [];
+  const model = new OpenAIEmbeddings();
+  const chunkContents = chunks.map((chunk) => chunk.pageContent);
+  const embeddings = await model.embedDocuments(chunkContents);
+  for (let i = 0; i < chunks.length; i++) {
+    lists.push({
+      content: chunks[i].pageContent,
+      metadata: chunks[i].metadata,
+      embedding: embeddings[i],
+      filename: filename,
+    });
+  }
+  return lists;
 }
 
 async function deleteAllRowsFromDB({ tableName, sbApiKey, sbUrl }) {
