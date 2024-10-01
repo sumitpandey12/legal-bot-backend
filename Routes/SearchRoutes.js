@@ -4,6 +4,6 @@ const SearchController = require("../Controller/SearchController");
 
 router.get("/chatHistory", SearchController.getChatHistory);
 router.delete("/chatHistory", SearchController.clearChatHistory);
-router.get("/", SearchController.search);
+router.post("/", SearchController.search);
 
 module.exports = router;
