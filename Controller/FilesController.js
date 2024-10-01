@@ -74,7 +74,7 @@ const FilesController = {
       const files = fs.readdirSync("/tmp");
 
       for (const file of files) {
-        const filePath = path.join(uploadsDir, file);
+        const filePath = path.join("/tmp", file);
         fs.unlinkSync(filePath);
       }
       return res.json({
