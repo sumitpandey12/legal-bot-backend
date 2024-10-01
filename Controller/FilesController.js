@@ -41,12 +41,12 @@ const FilesController = {
 
   async getFiles(req, res) {
     try {
-      const files = fs.readdirSync("./uploads");
+      const files = fs.readdirSync("./tmp");
 
       const returnFiles = files.map((file) => {
         return {
           name: file,
-          url: `http://localhost:3000/uploads/${file}`,
+          url: `${process.env.BASE_URL}/tmp/${file}`,
           minetype: file.split(".")[1],
         };
       });
@@ -70,7 +70,7 @@ const FilesController = {
       });
       console.log(response);
 
-      const uploadsDir = path.join(__dirname, "../uploads");
+      const uploadsDir = path.join(__dirname, "../tmp");
 
       const files = fs.readdirSync(uploadsDir);
 

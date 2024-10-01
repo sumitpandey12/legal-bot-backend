@@ -7,20 +7,18 @@ const FilesController = require("../Controller/FilesController");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    if (!fs.existsSync("./uploads")) {
-      fs.mkdirSync("./uploads");
+    if (!fs.existsSync("./tmp")) {
+      fs.mkdirSync("./tmp");
     }
-    cb(null, "./uploads");
+    cb(null, "./tmp");
   },
   filename: function (req, file, cb) {
-    const filePath = path.join(__dirname, "../uploads", file.originalname);
-
+    const filePath = path.join(__dirname, "../tmp", file.originalname);
     if (fs.existsSync(filePath)) {
       req.fileExists = true;
     } else {
       req.fileExists = false;
     }
-
     cb(null, file.originalname);
   },
 });

@@ -8,15 +8,6 @@ const FileExists = (req, res, next) => {
       message: "File already exists",
       fileExists: req.fileExists || false,
     });
-
-    const filePath = path.join(__dirname, "../uploads", req.file.originalname);
-
-    if (fs.existsSync(filePath)) {
-      return res.status(400).json({
-        status: "error",
-        message: "File already exists",
-      });
-    }
   } catch (err) {
     console.log(err);
   }
