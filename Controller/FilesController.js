@@ -71,9 +71,7 @@ const FilesController = {
       });
       console.log(response);
 
-      const uploadsDir = path.join(__dirname, "./tmp");
-
-      const files = fs.readdirSync(uploadsDir);
+      const files = fs.readdirSync("/tmp");
 
       for (const file of files) {
         const filePath = path.join(uploadsDir, file);
