@@ -70,7 +70,7 @@ const FilesController = {
       });
       console.log(response);
 
-      const uploadsDir = path.join(__dirname, "../tmp");
+      const uploadsDir = path.join(__dirname, "./tmp");
 
       const files = fs.readdirSync(uploadsDir);
 
