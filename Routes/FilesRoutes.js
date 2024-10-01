@@ -13,10 +13,15 @@ const storage = multer.diskStorage({
     cb(null, "/tmp");
   },
   filename: function (req, file, cb) {
-    const filePath = path.join(__dirname, "/tmp", file.originalname);
-    if (fs.existsSync(filePath)) {
-      req.fileExists = true;
-    } else {
+    const files = fs.readdirSync("/tmp");
+    let found = false;
+    const returnFiles = files.map((item) => {
+      if (item == file.originalname) {
+        found = true;
+        req.fileExists = true;
+      }
+    });
+    if (!found) {
       req.fileExists = false;
     }
     cb(null, file.originalname);
