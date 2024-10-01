@@ -28,6 +28,7 @@ const FilesController = {
       return res.json({
         status: "success",
         message: "File uploaded successfully",
+        fileExists: req.fileExists,
         data: {
           ...data,
           filename: req.file.filename,
