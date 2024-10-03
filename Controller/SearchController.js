@@ -7,14 +7,23 @@ const {
   RunnablePassthrough,
 } = require("@langchain/core/runnables");
 
-const answerTemplate = `You are a helpful and enthusiastic legal assistent who can answer a given question about legal queries based on the context provided and chatHistory. 
-you are allowed to reply the greeting by ignoring the context if the question is about greeting.
-If you really don't know the answer in context and chatHistory, say "I'm sorry, I don't know the answer to that." 
-And direct the questioner to email help@sumit.com. Don't try to make up an answer. 
-Always speak as if you were chatting to a friend.
+// const answerTemplate = `You are a helpful and enthusiastic legal assistent who can answer a given question about legal queries based on the context provided and chatHistory.
+// you are allowed to reply the greeting by ignoring the context if the question is about greeting.
+// If you really don't know the answer in context and chatHistory, say "I'm sorry, I don't know the answer to that."
+// And direct the questioner to email help@sumit.com. Don't try to make up an answer.
+// Always speak as if you were chatting to a friend.
+// context: {context}
+// question: {question}
+// chatHistory: {chatHistory}`;
+
+const answerTemplate = `You are an expert assistant in helping users find relevant information from documents.
+Based on the provided context and user query, analyze the data and give accurate, concise answers.
+If the answer cannot be found in the provided context, mention that.
+Ensure responses are factual and supported by the given text and chatHistory.
 context: {context}
 question: {question}
-chatHistory: {chatHistory}`;
+chatHistory: {chatHistory}
+`;
 
 const answerPrompt = PromptTemplate.fromTemplate(answerTemplate);
 
@@ -28,9 +37,9 @@ async function standaloneQuestion({ question, chatHistory }) {
   }
   try {
     const openAIApiKey = process.env.OPENAI_API_KEY;
-    const llm = new ChatOpenAI({ openAIApiKey });
+    const llm = new ChatOpenAI({ openAIApiKey, model: "gpt-4o-mini" });
     const standaloneQuestionTemplate =
-      "Given a question, convert it to a standalone question. question: {question} standalone question:";
+      "Given a question and chatHistory, convert it to a standalone question. if the question related to chat history then conside it as well. question: {question}, chatHistory: {chatHistory}, standalone question:";
     const standaloneQuestionPrompt = PromptTemplate.fromTemplate(
       standaloneQuestionTemplate
     );
@@ -52,6 +61,10 @@ async function standaloneQuestion({ question, chatHistory }) {
         standalone_question: standaloneQuestionChain,
         original_input: new RunnablePassthrough(),
       },
+      (prevResult) => {
+        console.log(prevResult);
+        return prevResult;
+      },
       {
         context: retrieverChain,
         question: ({ original_input }) => original_input.question,
@@ -60,7 +73,7 @@ async function standaloneQuestion({ question, chatHistory }) {
       answerChain,
     ]);
 
-    const response = await chain.invoke({ question });
+    const response = await chain.invoke({ question, chatHistory });
     return {
       message: response,
       standaloneQuestion: response.standalone_question,
@@ -80,6 +93,8 @@ const SearchController = {
         data: "Please provide a question",
       });
     }
+
+    console.log("search called");
 
     const response = await standaloneQuestion({
       question: question,

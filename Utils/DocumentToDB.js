@@ -19,9 +19,9 @@ async function uploadTextToDBVector({
     const text = (await pdf(filePath)).text;
 
     const splitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 700,
-      chunkOverlap: 70,
-      separators: ["\n\n", "\n", " ", ""],
+      chunkSize: 400,
+      chunkOverlap: 120,
+      separators: ["\n\n", "\n", " "],
     });
 
     console.log("Splitting text into chunks");
